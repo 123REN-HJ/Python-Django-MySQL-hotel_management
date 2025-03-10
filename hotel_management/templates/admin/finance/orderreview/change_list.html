@@ -1,0 +1,79 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static "admin/css/changelists.css" %}" />
+  <style>
+    .rating-stars {
+      color: #f8a100;
+      white-space: nowrap;
+    }
+    .view-button {
+      background-color: #447e9b;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 4px;
+      text-decoration: none;
+      display: inline-block;
+      transition: background-color 0.3s;
+      font-size: 12px;
+    }
+    .view-button:hover {
+      background-color: #336677;
+      color: white;
+      text-decoration: none;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <div class="module filtered" id="changelist">
+    {% block search %}{% search_form cl %}{% endblock %}
+    
+    {% block filters %}
+      {% if cl.has_filters %}
+        <div id="changelist-filter">
+          <h2>{% trans 'Filter' %}</h2>
+          {% for spec in cl.filter_specs %}{% admin_list_filter cl spec %}{% endfor %}
+        </div>
+      {% endif %}
+    {% endblock %}
+
+    {% block result_list %}
+      {% if cl.result_count %}
+        {% block pagination %}{% pagination cl %}{% endblock %}
+        <div class="results">
+          <table id="result_list">
+            <thead>
+              <tr>
+                <th>预订信息</th>
+                <th>客户</th>
+                <th>房间号</th>
+                <th>评分</th>
+                <th>评价内容</th>
+                <th>评价时间</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for review in cl.result_list %}
+                <tr class="{% cycle 'row1' 'row2' %}">
+                  <td>{{ review.reservation }}</td>
+                  <td>{{ review.get_customer }}</td>
+                  <td>{{ review.get_room }}</td>
+                  <td>{{ review.rating_stars|safe }}</td>
+                  <td>{{ review.comment|truncatechars:50 }}</td>
+                  <td>{{ review.created_at|date:"Y-m-d H:i" }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="paginator">{% trans "No results found." %}</p>
+      {% endif %}
+    {% endblock %}
+  </div>
+</div>
+{% endblock %} 

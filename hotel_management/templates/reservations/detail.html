@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}预订详情 - 酒店管理系统{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">预订详情</h4>
+        </div>
+        <div class="card-body">
+            {% if messages %}
+            <div class="messages mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="border-bottom pb-2 mb-3">基本信息</h5>
+                    <div class="row mb-2">
+                        <div class="col-5 text-muted">预订号：</div>
+                        <div class="col-7 font-weight-bold">{{ reservation.id }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5 text-muted">房间号：</div>
+                        <div class="col-7">{{ reservation.room.room_number }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5 text-muted">房间类型：</div>
+                        <div class="col-7">{{ reservation.room.get_room_type_display }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5 text-muted">价格：</div>
+                        <div class="col-7 text-success">¥{{ reservation.room.price }}/晚</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5 text-muted">总价：</div>
+                        <div class="col-7 text-success font-weight-bold">¥{{ reservation.total_price }}</div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <h5 class="border-bottom pb-2 mb-3">日期信息</h5>
+                    <div class="row mb-2">
+                        <div class="col-5 text-muted">入住日期：</div>
+                        <div class="col-7">{{ reservation.check_in_date }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5 text-muted">退房日期：</div>
+                        <div class="col-7">{{ reservation.check_out_date }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5 text-muted">入住天数：</div>
+                        <div class="col-7">{{ nights }} 晚</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5 text-muted">预订状态：</div>
+                        <div class="col-7">
+                            {% if reservation.status == 'pending' %}
+                            <span class="badge badge-warning">待确认</span>
+                            {% elif reservation.status == 'confirmed' %}
+                            <span class="badge badge-primary">已确认</span>
+                            {% elif reservation.status == 'checked_in' %}
+                            <span class="badge badge-info">已入住</span>
+                            {% elif reservation.status == 'checked_out' %}
+                            <span class="badge badge-success">已退房</span>
+                            {% elif reservation.status == 'cancelled' %}
+                            <span class="badge badge-danger">已取消</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5 text-muted">预订时间：</div>
+                        <div class="col-7">{{ reservation.created_at|date:"Y-m-d H:i" }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <hr>
+            
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <h5 class="border-bottom pb-2 mb-3">客户信息</h5>
+                    <div class="row mb-2">
+                        <div class="col-5 text-muted">姓名：</div>
+                        <div class="col-7">{{ reservation.customer.name }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5 text-muted">联系电话：</div>
+                        <div class="col-7">{{ reservation.customer.phone_number }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5 text-muted">身份证号：</div>
+                        <div class="col-7">{{ reservation.customer.id_card }}</div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <h5 class="border-bottom pb-2 mb-3">其他信息</h5>
+                    <div class="row mb-2">
+                        <div class="col-5 text-muted">入住人数：</div>
+                        <div class="col-7">{{ reservation.number_of_guests }} 人</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5 text-muted">特殊要求：</div>
+                        <div class="col-7">{{ reservation.special_requests|default:"无" }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-5 text-muted">备注：</div>
+                        <div class="col-7">{{ reservation.notes|default:"无" }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 支付和评价区域 -->
+            {% if reservation.status == 'checked_out' %}
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card border-info">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">订单已完成</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- 支付状态 -->
+                                <div class="col-md-6 mb-3">
+                                    <h6 class="border-bottom pb-2 mb-3">支付状态</h6>
+                                    {% if is_paid %}
+                                    <div class="alert alert-success">
+                                        <i class="fas fa-check-circle mr-2"></i> 此订单已支付
+                                    </div>
+                                    {% else %}
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-exclamation-circle mr-2"></i> 此订单尚未支付
+                                        <button class="btn btn-success btn-sm float-right pay-btn" data-id="{{ reservation.id }}">
+                                            <i class="fas fa-credit-card mr-1"></i> 立即支付
+                                        </button>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- 评价状态 -->
+                                <div class="col-md-6 mb-3">
+                                    <h6 class="border-bottom pb-2 mb-3">评价状态</h6>
+                                    {% if review %}
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-star mr-2"></i> 您已评价此订单
+                                        <div class="mt-2">
+                                            <div class="stars">
+                                                {% for i in "12345"|make_list %}
+                                                    {% if forloop.counter <= review.rating %}
+                                                        <i class="fas fa-star text-warning"></i>
+                                                    {% else %}
+                                                        <i class="far fa-star"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                            <div class="mt-2">{{ review.comment }}</div>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <div class="alert alert-secondary">
+                                        <i class="fas fa-comment mr-2"></i> 您尚未评价此订单
+                                        <a href="{% url 'finance:add_review' reservation.id %}" class="btn btn-primary btn-sm float-right">
+                                            <i class="fas fa-star mr-1"></i> 立即评价
+                                        </a>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="text-center mt-4">
+                <a href="{% url 'reservations:list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left mr-1"></i> 返回预订列表
+                </a>
+                
+                {% if reservation.status == 'pending' %}
+                <a href="{% url 'reservations:cancel' reservation.id %}" class="btn btn-danger ml-2" onclick="return confirm('确定要取消此预订吗？')">
+                    <i class="fas fa-times mr-1"></i> 取消预订
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSRF Token 表单 -->
+<form id="csrf_form" style="display: none;">
+    {% csrf_token %}
+</form>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // 支付按钮点击事件
+    $('.pay-btn').click(function() {
+        const reservationId = $(this).data('id');
+        if (confirm('确认支付该订单？')) {
+            $.ajax({
+                url: `/api/finance/pay-order/${reservationId}/`,
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('#csrf_form [name=csrfmiddlewaretoken]').value
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert('支付成功！');
+                        location.reload();
+                    } else {
+                        alert('支付失败：' + response.error);
+                    }
+                },
+                error: function() {
+                    alert('支付失败：请检查网络连接或联系管理员');
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %} 

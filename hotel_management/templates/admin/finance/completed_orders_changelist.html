@@ -1,0 +1,203 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static "admin/css/changelists.css" %}" />
+  <style>
+    .rating-stars {
+      color: #f8a100;
+      white-space: nowrap;
+    }
+    .review-button {
+      background-color: #8bb9d0;
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 4px;
+      text-decoration: none;
+      display: inline-block;
+      transition: background-color 0.3s;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      margin-right: 5px;
+    }
+    .review-button:hover {
+      background-color: #6da5c0;
+      color: white;
+      text-decoration: none;
+    }
+    .view-button {
+      background-color: #f8c973;
+      color: #604c22;
+      padding: 5px 10px;
+      border-radius: 4px;
+      text-decoration: none;
+      display: inline-block;
+      transition: background-color 0.3s;
+      font-size: 12px;
+      margin-right: 5px;
+    }
+    .view-button:hover {
+      background-color: #f6b846;
+      color: #604c22;
+      text-decoration: none;
+    }
+    .bill-button {
+      background-color: #a8d8e0;
+      color: #2b5d66;
+      padding: 5px 10px;
+      border-radius: 4px;
+      text-decoration: none;
+      display: inline-block;
+      transition: background-color 0.3s;
+      font-size: 12px;
+      margin-right: 5px;
+    }
+    .bill-button:hover {
+      background-color: #86c5d0;
+      color: #2b5d66;
+      text-decoration: none;
+    }
+    .badge-success {
+      background-color: #a4d1b8;
+      color: #2c664d;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .badge-warning {
+      background-color: #ffe0a3;
+      color: #806633;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .badge-secondary {
+      background-color: #d9dde0;
+      color: #4a5258;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .table-responsive {
+      overflow-x: auto;
+    }
+    .admin-note {
+      background-color: #e7f5ff;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      border-left: 4px solid #1890ff;
+    }
+  </style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label='finance' %}">财务管理</a>
+&rsaquo; 订单评价管理
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <div class="module" id="changelist">
+    <div class="changelist-form-container">
+      {% if is_admin %}
+      <div class="admin-note">
+        <h4>管理员提示</h4>
+        <p>作为管理员，您可以查看所有已退房的订单及其评价状态。您可以查看用户的评价，但无法代表用户评价订单。</p>
+      </div>
+      {% else %}
+      <div class="admin-note">
+        <h4>订单评价说明</h4>
+        <p>在此页面，您可以查看您的已完成订单，并对尚未评价的订单进行评价。您还可以查看订单的账单详情和支付状态。</p>
+      </div>
+      {% endif %}
+      
+      <div class="results">
+        {% if reservations %}
+        <div class="table-responsive">
+          <table id="result_list">
+            <thead>
+              <tr>
+                <th>订单号</th>
+                <th>客户</th>
+                <th>房间号</th>
+                <th>入住日期</th>
+                <th>退房日期</th>
+                <th>总价</th>
+                <th>支付状态</th>
+                <th>评价状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for reservation in reservations %}
+              <tr class="{% cycle 'row1' 'row2' %}">
+                <td>{{ reservation.id }}</td>
+                <td>{{ reservation.customer.name }}</td>
+                <td>{{ reservation.room.room_number }}</td>
+                <td>{{ reservation.check_in_date|date:"Y-m-d" }}</td>
+                <td>{{ reservation.check_out_date|date:"Y-m-d" }}</td>
+                <td>¥{{ reservation.total_price }}</td>
+                <td>
+                  {% if reservation.is_paid %}
+                  <span class="badge-success">已支付</span>
+                  {% else %}
+                  <span class="badge-warning">未支付</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if reservation.review %}
+                  <div class="rating-stars">
+                    {% for i in "12345"|make_list %}
+                      {% if forloop.counter <= reservation.review.rating %}
+                      ★
+                      {% else %}
+                      ☆
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                  {% else %}
+                  <span class="badge-secondary">未评价</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <!-- 账单按钮 - 所有人都可以查看 -->
+                  <a href="{% url 'admin:order-bill' reservation.id %}" class="bill-button" title="查看账单">
+                    <i class="fas fa-file-invoice-dollar" aria-hidden="true"></i> 账单
+                  </a>
+                  
+                  <!-- 评价按钮 - 仅未评价时显示 -->
+                  {% if not reservation.review and not is_admin %}
+                  <a href="{% url 'admin:add-review' reservation.id %}" class="review-button">
+                    <i class="fas fa-star" aria-hidden="true"></i> 评价
+                  </a>
+                  {% elif reservation.review %}
+                  <a href="{% url 'admin:finance_orderreview_change' reservation.review.id %}" class="view-button">
+                    <i class="fas fa-eye" aria-hidden="true"></i> 查看评价
+                  </a>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="errornote">
+          {% if is_admin %}
+          目前没有已完成的订单。
+          {% else %}
+          您目前没有已完成的订单。当您完成住宿并退房后，相关订单将显示在这里。
+          {% endif %}
+        </p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

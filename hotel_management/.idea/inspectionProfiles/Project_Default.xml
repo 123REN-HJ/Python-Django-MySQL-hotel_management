@@ -1,0 +1,43 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="HtmlUnknownTag" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="myValues">
+        <value>
+          <list size="7">
+            <item index="0" class="java.lang.String" itemvalue="nobr" />
+            <item index="1" class="java.lang.String" itemvalue="noembed" />
+            <item index="2" class="java.lang.String" itemvalue="comment" />
+            <item index="3" class="java.lang.String" itemvalue="noscript" />
+            <item index="4" class="java.lang.String" itemvalue="embed" />
+            <item index="5" class="java.lang.String" itemvalue="script" />
+            <item index="6" class="java.lang.String" itemvalue="h2" />
+          </list>
+        </value>
+      </option>
+      <option name="myCustomValuesEnabled" value="true" />
+    </inspection_tool>
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <value>
+          <list size="14">
+            <item index="0" class="java.lang.String" itemvalue="Django" />
+            <item index="1" class="java.lang.String" itemvalue="mysqlclient" />
+            <item index="2" class="java.lang.String" itemvalue="coreapi" />
+            <item index="3" class="java.lang.String" itemvalue="djangorestframework-simplejwt" />
+            <item index="4" class="java.lang.String" itemvalue="channels" />
+            <item index="5" class="java.lang.String" itemvalue="django-filter" />
+            <item index="6" class="java.lang.String" itemvalue="djangorestframework-jwt" />
+            <item index="7" class="java.lang.String" itemvalue="djangorestframework" />
+            <item index="8" class="java.lang.String" itemvalue="daphne" />
+            <item index="9" class="java.lang.String" itemvalue="django-cors-headers" />
+            <item index="10" class="java.lang.String" itemvalue="django" />
+            <item index="11" class="java.lang.String" itemvalue="pycryptodome" />
+            <item index="12" class="java.lang.String" itemvalue="django_mysql" />
+            <item index="13" class="java.lang.String" itemvalue="pyinstaller" />
+          </list>
+        </value>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>

@@ -1,0 +1,98 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .rating-display {
+        font-size: 1.5rem;
+        color: #f8a100;
+        margin: 10px 0;
+    }
+    .reservation-info {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        border-left: 4px solid #447e9b;
+    }
+    .reservation-info h3 {
+        margin-top: 0;
+        color: #447e9b;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 10px;
+    }
+    .detail-row {
+        display: flex;
+        margin-bottom: 8px;
+    }
+    .detail-label {
+        width: 120px;
+        color: #666;
+    }
+    .detail-value {
+        font-weight: 500;
+    }
+    .comment-box {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-top: 15px;
+        border-left: 4px solid #28a745;
+    }
+    .comment-box h3 {
+        margin-top: 0;
+        color: #28a745;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 10px;
+    }
+    .comment-content {
+        white-space: pre-line;
+        margin-top: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block after_field_sets %}
+<div class="reservation-info">
+    <h3>预订信息</h3>
+    <div class="detail-row">
+        <div class="detail-label">订单号：</div>
+        <div class="detail-value">{{ original.reservation.id }}</div>
+    </div>
+    <div class="detail-row">
+        <div class="detail-label">客户：</div>
+        <div class="detail-value">{{ original.reservation.customer.name }}</div>
+    </div>
+    <div class="detail-row">
+        <div class="detail-label">房间号：</div>
+        <div class="detail-value">{{ original.reservation.room.room_number }}</div>
+    </div>
+    <div class="detail-row">
+        <div class="detail-label">房间类型：</div>
+        <div class="detail-value">{{ original.reservation.room.get_room_type_display }}</div>
+    </div>
+    <div class="detail-row">
+        <div class="detail-label">入住日期：</div>
+        <div class="detail-value">{{ original.reservation.check_in_date|date:"Y-m-d" }}</div>
+    </div>
+    <div class="detail-row">
+        <div class="detail-label">退房日期：</div>
+        <div class="detail-value">{{ original.reservation.check_out_date|date:"Y-m-d" }}</div>
+    </div>
+</div>
+
+<div class="rating-display">
+    评分：{% with ''|center:original.rating as range %}
+        {% for _ in range %}★{% endfor %}
+    {% endwith %}
+    {% with ''|center:5|slice:original.rating as range %}
+        {% for _ in range %}☆{% endfor %}
+    {% endwith %}
+</div>
+
+<div class="comment-box">
+    <h3>评价内容</h3>
+    <div class="comment-content">{{ original.comment }}</div>
+</div>
+{% endblock %} 

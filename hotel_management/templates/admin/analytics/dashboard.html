@@ -1,0 +1,140 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- 关键指标卡片 -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">当前入住率</h5>
+                    <h2 class="card-value">{{ current_occupancy }}%</h2>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">本月收入</h5>
+                    <h2 class="card-value">¥{{ monthly_income|floatformat:0 }}</h2>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">本月预订数</h5>
+                    <h2 class="card-value">{{ monthly_bookings }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 图表区域 -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">近7天入住率趋势</h5>
+                    <canvas id="occupancyChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">近7天收入趋势</h5>
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.dashboard-container {
+    padding: 20px;
+}
+.card {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+.card-title {
+    color: #666;
+    font-size: 16px;
+    margin-bottom: 15px;
+}
+.card-value {
+    color: #333;
+    font-size: 28px;
+    margin: 10px 0;
+    font-weight: bold;
+}
+</style>
+
+<!-- 引入Chart.js -->
+<script src="{% static 'js/chart.js' %}"></script>
+
+<script>
+// 入住率图表
+const occupancyData = {{ daily_occupancy|safe }};
+new Chart(document.getElementById('occupancyChart'), {
+    type: 'line',
+    data: {
+        labels: occupancyData.map(d => d.date),
+        datasets: [{
+            label: '入住率 (%)',
+            data: occupancyData.map(d => d.occupancy),
+            borderColor: '#36a2eb',
+            tension: 0.1,
+            fill: false
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100
+            }
+        }
+    }
+});
+
+// 收入图表
+const revenueData = {{ daily_revenue|safe }};
+new Chart(document.getElementById('revenueChart'), {
+    type: 'bar',
+    data: {
+        labels: revenueData.map(d => d.date),
+        datasets: [{
+            label: '日收入 (元)',
+            data: revenueData.map(d => d.revenue),
+            backgroundColor: '#4bc0c0'
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>
+{% endblock %} 

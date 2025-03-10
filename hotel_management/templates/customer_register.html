@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="register-container">
+    <h2 class="text-center mb-4">顾客注册</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="id_username">用户名</label>
+            {{ form.username }}
+            {% if form.username.errors %}
+            <div class="error-message">{{ form.username.errors.0 }}</div>
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label for="id_password">密码</label>
+            {{ form.password }}
+            {% if form.password.errors %}
+            <div class="error-message">{{ form.password.errors.0 }}</div>
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label for="id_email">邮箱</label>
+            {{ form.email }}
+            {% if form.email.errors %}
+            <div class="error-message">{{ form.email.errors.0 }}</div>
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label for="id_phone_number">手机号码</label>
+            <input type="tel" name="phone_number" id="id_phone_number" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary">注册</button>
+        <div class="text-center mt-3">
+            <a href="{% url 'customer_login' %}" class="text-decoration-none">已有账号？返回登录</a>
+        </div>
+    </form>
+</div>
+{% endblock %} 

@@ -1,0 +1,342 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .bill-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    .bill-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .bill-title {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 5px;
+        color: #333;
+    }
+    .bill-subtitle {
+        color: #666;
+        font-size: 16px;
+    }
+    .bill-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+    .bill-info-section {
+        flex: 1;
+        min-width: 250px;
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 0 10px 10px 0;
+    }
+    .bill-info-title {
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #495057;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 5px;
+    }
+    .bill-info-row {
+        display: flex;
+        margin-bottom: 5px;
+    }
+    .bill-info-label {
+        width: 120px;
+        color: #6c757d;
+    }
+    .bill-info-value {
+        flex: 1;
+        font-weight: 500;
+    }
+    .bill-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+    .bill-table th, .bill-table td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .bill-table th {
+        background-color: #e9ecef;
+        color: #495057;
+        font-weight: 600;
+    }
+    .bill-table tr:last-child td {
+        border-bottom: none;
+    }
+    .bill-total {
+        margin-top: 20px;
+        text-align: right;
+    }
+    .bill-total-row {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 5px;
+    }
+    .bill-total-label {
+        width: 150px;
+        text-align: right;
+        padding-right: 20px;
+        color: #6c757d;
+    }
+    .bill-total-value {
+        width: 150px;
+        text-align: right;
+        font-weight: 500;
+    }
+    .bill-grand-total {
+        font-size: 20px;
+        font-weight: bold;
+        color: #5ca97c;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 2px solid #dee2e6;
+    }
+    .payment-status {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 5px;
+        text-align: center;
+    }
+    .payment-status.paid {
+        background-color: #e3f4eb;
+        color: #2c664d;
+        border: 1px solid #c1e7d4;
+    }
+    .payment-status.unpaid {
+        background-color: #ffedf0;
+        color: #864349;
+        border: 1px solid #f5d6da;
+    }
+    .bill-actions {
+        margin-top: 30px;
+        text-align: center;
+    }
+    .btn {
+        display: inline-block;
+        padding: 8px 16px;
+        margin: 0 5px;
+        border-radius: 4px;
+        text-decoration: none;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .btn-primary {
+        background-color: #8baad6;
+        border: 1px solid #7a9bc9;
+        color: #2d4263;
+    }
+    .btn-success {
+        background-color: #a4d1b8;
+        border: 1px solid #91c5a7;
+        color: #2c664d;
+    }
+    .btn-secondary {
+        background-color: #d9dde0;
+        border: 1px solid #c9ced2;
+        color: #4a5258;
+    }
+    .btn:hover {
+        opacity: 0.9;
+    }
+    @media print {
+        .bill-actions, .breadcrumbs, #header, .bill-print-btn {
+            display: none;
+        }
+        body {
+            background-color: white;
+        }
+        .bill-container {
+            box-shadow: none;
+            margin: 0;
+            padding: 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label='finance' %}">财务管理</a>
+&rsaquo; <a href="{% url 'admin:completed-orders' %}">订单评价管理</a>
+&rsaquo; 订单账单详情
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <div class="bill-container">
+        <div class="bill-header">
+            <h1 class="bill-title">酒店住宿账单</h1>
+            <div class="bill-subtitle">订单号: {{ reservation.id }}</div>
+        </div>
+        
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div class="bill-info">
+            <div class="bill-info-section">
+                <div class="bill-info-title">客户信息</div>
+                <div class="bill-info-row">
+                    <div class="bill-info-label">客户姓名:</div>
+                    <div class="bill-info-value">{{ reservation.customer.name }}</div>
+                </div>
+                <div class="bill-info-row">
+                    <div class="bill-info-label">联系电话:</div>
+                    <div class="bill-info-value">{{ reservation.customer.phone_number }}</div>
+                </div>
+                <div class="bill-info-row">
+                    <div class="bill-info-label">电子邮箱:</div>
+                    <div class="bill-info-value">{{ reservation.customer.email }}</div>
+                </div>
+            </div>
+            
+            <div class="bill-info-section">
+                <div class="bill-info-title">入住信息</div>
+                <div class="bill-info-row">
+                    <div class="bill-info-label">房间号:</div>
+                    <div class="bill-info-value">{{ reservation.room.room_number }}</div>
+                </div>
+                <div class="bill-info-row">
+                    <div class="bill-info-label">房间类型:</div>
+                    <div class="bill-info-value">{{ reservation.room.get_room_type_display }}</div>
+                </div>
+                <div class="bill-info-row">
+                    <div class="bill-info-label">入住日期:</div>
+                    <div class="bill-info-value">{{ check_in_date|date:"Y-m-d" }}</div>
+                </div>
+                <div class="bill-info-row">
+                    <div class="bill-info-label">退房日期:</div>
+                    <div class="bill-info-value">{{ check_out_date|date:"Y-m-d" }}</div>
+                </div>
+                <div class="bill-info-row">
+                    <div class="bill-info-label">住宿天数:</div>
+                    <div class="bill-info-value">{{ days }} 天</div>
+                </div>
+            </div>
+        </div>
+        
+        <table class="bill-table">
+            <thead>
+                <tr>
+                    <th>项目</th>
+                    <th>描述</th>
+                    <th>单价</th>
+                    <th>数量</th>
+                    <th>金额</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>房费</td>
+                    <td>{{ reservation.room.get_room_type_display }} ({{ reservation.room.room_number }})</td>
+                    <td>¥{{ daily_rate|floatformat:2 }}/晚</td>
+                    <td>{{ days }} 晚</td>
+                    <td>¥{{ room_total|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>服务费</td>
+                    <td>住宿服务费 (10%)</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>¥{{ service_fee|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>税费</td>
+                    <td>增值税 (5%)</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>¥{{ tax|floatformat:2 }}</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="bill-total">
+            <div class="bill-total-row">
+                <div class="bill-total-label">小计:</div>
+                <div class="bill-total-value">¥{{ room_total|floatformat:2 }}</div>
+            </div>
+            <div class="bill-total-row">
+                <div class="bill-total-label">服务费:</div>
+                <div class="bill-total-value">¥{{ service_fee|floatformat:2 }}</div>
+            </div>
+            <div class="bill-total-row">
+                <div class="bill-total-label">税费:</div>
+                <div class="bill-total-value">¥{{ tax|floatformat:2 }}</div>
+            </div>
+            <div class="bill-total-row bill-grand-total">
+                <div class="bill-total-label">总计:</div>
+                <div class="bill-total-value">¥{{ total_amount|floatformat:2 }}</div>
+            </div>
+        </div>
+        
+        <div class="payment-status {% if is_paid %}paid{% else %}unpaid{% endif %}">
+            {% if is_paid %}
+                <h3>已支付</h3>
+                <p>支付日期: {{ payment_date|date:"Y-m-d" }}</p>
+            {% else %}
+                <h3>未支付</h3>
+                <p>请尽快完成支付</p>
+            {% endif %}
+        </div>
+        
+        <div class="bill-actions">
+            <button class="btn btn-primary bill-print-btn" onclick="window.print()">打印账单</button>
+            {% if not is_paid %}
+            <button class="btn btn-success" onclick="payBill({{ reservation.id }})">立即支付</button>
+            {% endif %}
+            <a href="{% url 'admin:completed-orders' %}" class="btn btn-secondary">返回订单列表</a>
+        </div>
+    </div>
+</div>
+
+<!-- 添加一个隐藏的表单，提供CSRF Token -->
+<form id="csrf_form" style="display: none;">
+    {% csrf_token %}
+</form>
+
+<script>
+function payBill(reservationId) {
+    if (confirm('确认支付该订单？')) {
+        fetch(`/api/finance/pay-order/${reservationId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('#csrf_form [name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('支付成功！');
+                window.location.reload();
+            } else {
+                alert('支付失败：' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('支付失败：请检查网络连接或联系管理员');
+        });
+    }
+}
+</script>
+{% endblock %} 

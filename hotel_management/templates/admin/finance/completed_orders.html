@@ -1,0 +1,160 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    #changelist-filter h2 {
+      background-color: #447e9b;
+    }
+    #changelist-filter a:focus, 
+    #changelist-filter a:hover {
+      color: #447e9b;
+    }
+    .button {
+      transition: all 0.3s;
+      cursor: pointer;
+      display: inline-block;
+      margin: 2px;
+    }
+    .button:hover {
+      opacity: 0.8;
+      transform: translateY(-1px);
+    }
+    table.result-list {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    table.result-list th {
+      background: #417690;
+      color: white;
+      font-weight: bold;
+      padding: 8px 10px;
+      text-align: left;
+    }
+    table.result-list td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #eee;
+    }
+    table.result-list tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    .info-box {
+      background-color: #f8f8f8;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      border-left: 4px solid #447e9b;
+    }
+    .info-box h2 {
+      margin-top: 0;
+      color: #447e9b;
+    }
+    .no-results {
+      padding: 20px;
+      text-align: center;
+      color: #666;
+      background-color: #f9f9f9;
+      border-radius: 5px;
+      margin-top: 20px;
+    }
+  </style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+  &rsaquo; <a href="{% url 'admin:app_list' app_label=app_label %}">{{ app_label|capfirst }}</a>
+  &rsaquo; {% trans 'Completed Orders' %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <div class="module" id="changelist">
+    <div class="info-box">
+      <h2>已完成订单管理</h2>
+      <p>这里显示您的所有已退房订单。您可以：</p>
+      <ul>
+        <li>查看订单详情</li>
+        <li>为未评价的订单添加评价</li>
+        <li>为未支付的订单进行支付</li>
+      </ul>
+    </div>
+
+    {% if result_count %}
+      <div class="results">
+        <table class="result-list">
+          <thead>
+            <tr>
+              <th>预订信息</th>
+              <th>房间号</th>
+              <th>退房日期</th>
+              <th>总价</th>
+              <th>支付状态</th>
+              <th>评价状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in orders %}
+              <tr>
+                <td>{{ item.order.customer.name }} - 预订#{{ item.order.id }}</td>
+                <td>{{ item.order.room.room_number }}</td>
+                <td>{{ item.order.check_out_date }}</td>
+                <td>¥{{ item.order.total_price }}</td>
+                <td>{{ item.payment_status|safe }}</td>
+                <td>{{ item.review_status|safe }}</td>
+                <td>{{ item.action_buttons|safe }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="no-results">
+        <p>
+          您目前没有已完成的订单。<br>
+          当您完成入住并退房后，相关订单将显示在这里。
+        </p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- 添加一个隐藏的表单，提供 CSRF Token -->
+<form id="csrf_form" style="display: none;">
+  {% csrf_token %}
+</form>
+
+{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<script type="text/javascript">
+function payOrder(reservationId) {
+    if (confirm('确认支付该订单？')) {
+        fetch(`/api/finance/pay-order/${reservationId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('#csrf_form [name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('支付成功！');
+                window.location.reload();
+            } else {
+                alert('支付失败：' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('支付失败：请检查网络连接或联系管理员');
+        });
+    }
+}
+</script>
+{% endblock %} 

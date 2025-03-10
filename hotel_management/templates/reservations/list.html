@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}我的预订 - 酒店管理系统{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">我的预订</h2>
+    
+    {% if messages %}
+    <div class="messages mb-4">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <ul class="nav nav-tabs mb-4" id="reservationTabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="pending-tab" data-toggle="tab" href="#pending" role="tab">
+                待确认 <span class="badge badge-warning">{{ pending.count }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="confirmed-tab" data-toggle="tab" href="#confirmed" role="tab">
+                已确认 <span class="badge badge-primary">{{ confirmed.count }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="checked-in-tab" data-toggle="tab" href="#checked-in" role="tab">
+                已入住 <span class="badge badge-info">{{ checked_in.count }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="checked-out-tab" data-toggle="tab" href="#checked-out" role="tab">
+                已退房 <span class="badge badge-success">{{ checked_out.count }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="cancelled-tab" data-toggle="tab" href="#cancelled" role="tab">
+                已取消 <span class="badge badge-danger">{{ cancelled.count }}</span>
+            </a>
+        </li>
+    </ul>
+    
+    <div class="tab-content" id="reservationTabsContent">
+        <!-- 待确认预订 -->
+        <div class="tab-pane fade show active" id="pending" role="tabpanel">
+            {% include 'reservations/partials/reservation_table.html' with reservations=pending status='pending' %}
+        </div>
+        
+        <!-- 已确认预订 -->
+        <div class="tab-pane fade" id="confirmed" role="tabpanel">
+            {% include 'reservations/partials/reservation_table.html' with reservations=confirmed status='confirmed' %}
+        </div>
+        
+        <!-- 已入住预订 -->
+        <div class="tab-pane fade" id="checked-in" role="tabpanel">
+            {% include 'reservations/partials/reservation_table.html' with reservations=checked_in status='checked_in' %}
+        </div>
+        
+        <!-- 已退房预订 -->
+        <div class="tab-pane fade" id="checked-out" role="tabpanel">
+            {% include 'reservations/partials/reservation_table.html' with reservations=checked_out status='checked_out' %}
+        </div>
+        
+        <!-- 已取消预订 -->
+        <div class="tab-pane fade" id="cancelled" role="tabpanel">
+            {% include 'reservations/partials/reservation_table.html' with reservations=cancelled status='cancelled' %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}添加订单评价 - 酒店管理系统{% endblock %}
+
+{% block extra_css %}
+<style>
+    .rating-stars {
+        font-size: 2.5rem;
+        cursor: pointer;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    .rating-stars i {
+        color: #ddd;
+        margin-right: 5px;
+        transition: all 0.3s;
+    }
+    .rating-stars i.active {
+        color: #ffc107;
+    }
+    .rating-stars i:hover {
+        transform: scale(1.2);
+    }
+    .reservation-details {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 5px;
+        margin-bottom: 25px;
+        border-left: 4px solid #17a2b8;
+    }
+    .reservation-details .row {
+        margin-bottom: 10px;
+    }
+    #id_comment {
+        min-height: 150px;
+    }
+    .card-header {
+        font-weight: 500;
+    }
+    .rating-label {
+        text-align: center;
+        display: block;
+        margin-bottom: 10px;
+        font-weight: 500;
+        font-size: 1.1rem;
+    }
+    .btn-submit {
+        padding: 10px 25px;
+        font-weight: 500;
+    }
+    .info-box {
+        background-color: #e6f7ff;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        border-left: 4px solid #1890ff;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-star mr-2"></i>评价您的住宿体验</h4>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                    <div class="messages mb-4">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                            {{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="info-box mb-4">
+                        <h5><i class="fas fa-info-circle mr-2"></i>为什么您的评价很重要？</h5>
+                        <p class="mb-0">您的评价将帮助我们改进服务质量，也能为其他旅客提供有价值的参考。完成评价后，您将获得下次预订的优惠券！</p>
+                    </div>
+
+                    <!-- 预订信息摘要 -->
+                    <div class="reservation-details">
+                        <h5 class="mb-3 border-bottom pb-2">订单信息</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-5 text-muted">房间号：</div>
+                                    <div class="col-7 font-weight-bold">{{ reservation.room.room_number }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-5 text-muted">房间类型：</div>
+                                    <div class="col-7 font-weight-bold">{{ reservation.room.get_room_type_display }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-5 text-muted">入住日期：</div>
+                                    <div class="col-7">{{ reservation.check_in_date }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-5 text-muted">退房日期：</div>
+                                    <div class="col-7">{{ reservation.check_out_date }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-5 text-muted">住宿天数：</div>
+                                    <div class="col-7">{{ reservation.check_out_date|timeuntil:reservation.check_in_date|default:"计算中..." }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-5 text-muted">总价：</div>
+                                    <div class="col-7 text-success font-weight-bold">¥{{ reservation.total_price }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post" id="review-form">
+                        {% csrf_token %}
+                        
+                        <!-- 评分 -->
+                        <div class="form-group">
+                            <label class="rating-label" for="id_rating">请点击星星为您的住宿体验评分：</label>
+                            <div class="rating-stars" id="rating-stars">
+                                <i class="fas fa-star" data-rating="1"></i>
+                                <i class="fas fa-star" data-rating="2"></i>
+                                <i class="fas fa-star" data-rating="3"></i>
+                                <i class="fas fa-star" data-rating="4"></i>
+                                <i class="fas fa-star" data-rating="5"></i>
+                            </div>
+                            <div class="rating-text text-center mb-3 text-muted" id="rating-text">尚未评分</div>
+                            {{ form.rating.errors }}
+                            {{ form.rating }}
+                        </div>
+                        
+                        <!-- 评价内容 -->
+                        <div class="form-group">
+                            <label for="id_comment" class="font-weight-bold">您的评价内容：</label>
+                            {{ form.comment }}
+                            <small class="form-text text-muted">请分享您的入住体验，包括房间、服务、设施等方面的感受。我们非常重视您的每一条建议！</small>
+                            {{ form.comment.errors }}
+                        </div>
+                        
+                        <!-- 按钮区域 -->
+                        <div class="text-center mt-4">
+                            <a href="{% url 'finance:order_list' %}" class="btn btn-secondary mr-3">
+                                <i class="fas fa-arrow-left"></i> 返回订单列表
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-submit">
+                                <i class="fas fa-paper-plane mr-1"></i> 提交我的评价
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // 隐藏原始的评分选择框
+    $('#id_rating').hide();
+    
+    // 星级评分交互效果
+    const stars = $('.rating-stars i');
+    const ratingTexts = [
+        "",
+        "差强人意 - 需要很多改进",
+        "一般 - 有待提高",
+        "满意 - 符合期望",
+        "很好 - 超出期望", 
+        "极佳 - 完美体验！"
+    ];
+    
+    // 鼠标悬停效果
+    stars.hover(function() {
+        const rating = $(this).data('rating');
+        highlightStars(rating);
+        $('#rating-text').text(ratingTexts[rating]);
+    }, function() {
+        const currentRating = parseInt($('#id_rating').val()) || 0;
+        highlightStars(currentRating);
+        $('#rating-text').text(currentRating > 0 ? ratingTexts[currentRating] : "尚未评分");
+    });
+    
+    // 点击选择评分
+    stars.click(function() {
+        const rating = $(this).data('rating');
+        $('#id_rating').val(rating);
+        highlightStars(rating);
+        $('#rating-text').text(ratingTexts[rating]);
+    });
+    
+    // 高亮显示星星
+    function highlightStars(rating) {
+        stars.each(function() {
+            const starRating = $(this).data('rating');
+            $(this).toggleClass('active', starRating <= rating);
+        });
+    }
+    
+    // 表单验证
+    $('#review-form').submit(function(e) {
+        const rating = $('#id_rating').val();
+        const comment = $('#id_comment').val();
+        
+        if (!rating) {
+            e.preventDefault();
+            alert('请选择评分星级！');
+            return false;
+        }
+        
+        if (!comment.trim()) {
+            e.preventDefault();
+            alert('请填写评价内容！');
+            $('#id_comment').focus();
+            return false;
+        }
+        
+        return true;
+    });
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,371 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .metrics-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    .metric-box {
+        flex: 1;
+        min-width: 250px;
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 10px 0;
+    }
+    .metric-title {
+        font-size: 1rem;
+        color: #666;
+        margin-bottom: 5px;
+    }
+    .metric-box.rating .metric-value {
+        color: #f8a100;
+    }
+    .metric-box.reviews .metric-value {
+        color: #447e9b;
+    }
+    .metric-box.satisfaction .metric-value {
+        color: #28a745;
+    }
+    .chart-container {
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+    }
+    .chart-container h2 {
+        margin-top: 0;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #eee;
+        margin-bottom: 20px;
+        color: #444;
+    }
+    .chart-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    .table-container {
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+    }
+    .room-types-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .room-types-table th, .room-types-table td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+    .room-types-table th {
+        background-color: #f8f9fa;
+        color: #495057;
+        font-weight: 600;
+    }
+    .room-types-table tr:last-child td {
+        border-bottom: none;
+    }
+    .rating-stars {
+        color: #f8a100;
+        white-space: nowrap;
+    }
+    .reviews-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .reviews-table th, .reviews-table td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+    .reviews-table th {
+        background-color: #f8f9fa;
+        color: #495057;
+        font-weight: 600;
+    }
+    .reviews-table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    .review-comment {
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .badge {
+        display: inline-block;
+        padding: 0.25em 0.6em;
+        font-size: 75%;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+    }
+    .badge-1 { background-color: #f8c9c9; color: #863333; }
+    .badge-2 { background-color: #fcd9b6; color: #8a5d33; }
+    .badge-3 { background-color: #ffe0a3; color: #806633; }
+    .badge-4 { background-color: #c6e7d9; color: #2c664d; }
+    .badge-5 { background-color: #a4d1b8; color: #2c664d; }
+    @media (max-width: 768px) {
+        .chart-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label='finance' %}">财务管理</a>
+&rsaquo; 客户满意度分析
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>客户满意度分析</h1>
+    
+    <!-- 关键指标 -->
+    <div class="metrics-container">
+        <div class="metric-box rating">
+            <div class="metric-title">平均评分</div>
+            <div class="metric-value">{{ avg_rating }}</div>
+            <div class="metric-subtitle">（满分5星）</div>
+        </div>
+        <div class="metric-box reviews">
+            <div class="metric-title">总评价数</div>
+            <div class="metric-value">{{ total_reviews }}</div>
+            <div class="metric-subtitle">条客户评价</div>
+        </div>
+        <div class="metric-box satisfaction">
+            <div class="metric-title">客户满意度</div>
+            <div class="metric-value">{{ satisfaction_percentage }}%</div>
+            <div class="metric-subtitle">满意度百分比</div>
+        </div>
+    </div>
+    
+    <!-- 图表区域 -->
+    <div class="chart-grid">
+        <!-- 评分分布 -->
+        <div class="chart-container">
+            <h2>评分分布</h2>
+            <canvas id="ratingDistributionChart"></canvas>
+        </div>
+        
+        <!-- 评分趋势 -->
+        <div class="chart-container">
+            <h2>评分趋势（近12个月）</h2>
+            <canvas id="ratingTrendChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- 房间类型评分分析 -->
+    <div class="table-container">
+        <h2>各房间类型满意度分析</h2>
+        {% if room_type_ratings %}
+        <table class="room-types-table">
+            <thead>
+                <tr>
+                    <th>房间类型</th>
+                    <th>平均评分</th>
+                    <th>评价数量</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in room_type_ratings %}
+                <tr>
+                    <td>{{ item.room_type_name }}</td>
+                    <td>
+                        <div class="rating-stars">
+                            {% with ''|center:item.avg_rating|floatformat:0 as stars %}
+                                {% for _ in stars %}★{% endfor %}
+                            {% endwith %}
+                            {% with ''|center:5|slice:item.avg_rating|floatformat:0 as emptystars %}
+                                {% for _ in emptystars %}☆{% endfor %}
+                            {% endwith %}
+                            <span class="ml-2">{{ item.avg_rating|floatformat:2 }}</span>
+                        </div>
+                    </td>
+                    <td>{{ item.count }} 条评价</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>暂无房间类型评分数据</p>
+        {% endif %}
+    </div>
+    
+    <!-- 最近评价 -->
+    <div class="table-container">
+        <h2>最近评价</h2>
+        {% if review_summaries %}
+        <table class="reviews-table">
+            <thead>
+                <tr>
+                    <th>评分</th>
+                    <th>客户</th>
+                    <th>房间</th>
+                    <th>评价内容</th>
+                    <th>日期</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for review in review_summaries %}
+                <tr>
+                    <td><span class="badge badge-{{ review.rating }}">{{ review.rating }}星</span></td>
+                    <td>{{ review.customer }}</td>
+                    <td>{{ review.room }}</td>
+                    <td class="review-comment">{{ review.comment }}</td>
+                    <td>{{ review.date }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>暂无评价数据</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 评分分布图表
+    const ratingDistributionCtx = document.getElementById('ratingDistributionChart').getContext('2d');
+    const ratingDistributionChart = new Chart(ratingDistributionCtx, {
+        type: 'pie',
+        data: {
+            labels: {{ rating_labels|safe }},
+            datasets: [{
+                data: {{ rating_data|safe }},
+                backgroundColor: {{ rating_colors|safe }},
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            let value = context.raw || 0;
+                            let percentage = Math.round((value / {{ total_reviews|default:"1" }}) * 100);
+                            return `${label} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // 评分趋势图表
+    const ratingTrendCtx = document.getElementById('ratingTrendChart').getContext('2d');
+    const ratingTrendChart = new Chart(ratingTrendCtx, {
+        type: 'line',
+        data: {
+            labels: {{ trend_labels|safe }},
+            datasets: [{
+                label: '平均评分',
+                data: {{ trend_data|safe }},
+                borderColor: '#f8a100',
+                backgroundColor: 'rgba(248, 161, 0, 0.1)',
+                tension: 0.3,
+                fill: true,
+                yAxisID: 'y',
+                borderWidth: 2
+            }, {
+                label: '评价数量',
+                data: {{ review_counts|safe }},
+                borderColor: '#447e9b',
+                backgroundColor: 'rgba(68, 126, 155, 0.1)',
+                tension: 0.3,
+                fill: true,
+                yAxisID: 'y1',
+                borderWidth: 2,
+                borderDash: [5, 5]
+            }]
+        },
+        options: {
+            responsive: true,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    min: 0,
+                    max: 5,
+                    title: {
+                        display: true,
+                        text: '平均评分'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                    title: {
+                        display: true,
+                        text: '评价数量'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: '月份'
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            let value = context.raw || 0;
+                            if (label === '平均评分') {
+                                return `${label}: ${value} 星`;
+                            } else {
+                                return `${label}: ${value} 条`;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %} 
